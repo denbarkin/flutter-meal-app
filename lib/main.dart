@@ -1,15 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:mealapp/dummy_data.dart';
 import 'package:mealapp/screens/category_meals_screen.dart';
 import 'package:mealapp/screens/filters_screen.dart';
 import 'package:mealapp/screens/meal_detail_screen.dart';
 import 'package:mealapp/screens/tabs_screen.dart';
-
-import 'screens/categories_screen.dart';
+import './models/meal.dart';
 
 void main() => runApp(const MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Map<String, bool> _filters = {
+    "gluten": false,
+    "lactose": false,
+    "vegan": false,
+    "vegetarian": false,
+  };
+
+  late List<Meal> _availableMeals = DUMMY_MEALS;
+
+  void _setFilters(Map<String, bool> filterData) {
+    setState(() {
+      _filters = filterData;
+
+      _availableMeals = DUMMY_MEALS.where((meal) {
+        if (_filters['gluten'] == true && !meal.isGlutenFree) return false;
+        if (_filters['lactose'] == true && !meal.isLactoseFree) return false;
+        if (_filters['vegetarian'] == true && !meal.isVegetarian) return false;
+        if (_filters['vegan'] == true && !meal.isVegan) return false;
+
+        return false;
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,16 +64,21 @@ class MyApp extends StatelessWidget {
       ),
       //home: const CategoriesScreen(),
       routes: <String, WidgetBuilder>{
-        '/': (context) => const TabsScreen(), // Same as HomeScreen
-        CategoryMealScreen.routeName: (ctx) => const CategoryMealScreen(),
+        '/': (ctx) => const TabsScreen(), // Same as HomeScreen
+        CategoryMealScreen.routeName: (ctx) =>
+            CategoryMealScreen(availableMeals: _availableMeals),
         MealDetailScreen.routeName: (ctx) => const MealDetailScreen(),
-        FiltersScreen.routeName: (context) => const FiltersScreen()
+        FiltersScreen.routeName: (ctx) => FiltersScreen(
+              filters: _filters,
+              saveHandler: _setFilters,
+            )
       },
-      onUnknownRoute: (settings) {
-        MaterialPageRoute(
-          builder: (context) => const CategoryMealScreen(),
-        );
-      },
+      // onUnknownRoute: (settings) {
+      //   MaterialPageRoute(
+      //     builder: (context) => const CategoryMealScreen(),
+      //   );
+      //   return null;
+      // },
     );
   }
 }
